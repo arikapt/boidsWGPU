@@ -4,8 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-wgpu = "0.20"
-winit = "0.29"
-pollster = "0.3"
-bytemuck = { version = "1.14", features = ["derive"] }
-rand = "0.8"
+wgpu = "30.0.1"
+winit = "0.30.13"
+bytemuck = { version = "1.25.2", features = ["derive"] }
+rand = "0.10.2"
+
+pollster = "1.0.1"
