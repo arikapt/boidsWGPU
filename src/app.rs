@@ -1,4 +1,3 @@
-use crate::{BoidsSimulation, HEIGHT, WIDTH};
 use std::sync::Arc;
 use winit::application::ApplicationHandler;
 use winit::dpi::LogicalSize;
@@ -6,6 +5,7 @@ use winit::event::{ElementState, KeyEvent, WindowEvent};
 use winit::event_loop::ActiveEventLoop;
 use winit::keyboard::{KeyCode, PhysicalKey};
 use winit::window::{Window, WindowId};
+use crate::simulation::{BoidsSimulation, HEIGHT, WIDTH};
 
 #[derive(Default)]
 pub struct App {
@@ -32,7 +32,7 @@ impl ApplicationHandler for App {
         self.simulation = Some(simulation);
 
         if let Some(simulation) = self.simulation.as_ref() {
-            simulation.window.request_redraw();
+            simulation.window().request_redraw();
         }
     }
 
@@ -46,7 +46,7 @@ impl ApplicationHandler for App {
             return;
         };
 
-        if window_id != simulation.window.id() {
+        if window_id != simulation.window().id() {
             return;
         }
 
@@ -67,7 +67,7 @@ impl ApplicationHandler for App {
 
             WindowEvent::RedrawRequested => {
                 simulation.update();
-                simulation.window.request_redraw();
+                simulation.window().request_redraw();
             }
 
             _ => {}
@@ -76,7 +76,7 @@ impl ApplicationHandler for App {
 
     fn about_to_wait(&mut self, _event_loop: &ActiveEventLoop) {
         if let Some(simulation) = self.simulation.as_ref() {
-            simulation.window.request_redraw();
+            simulation.window().request_redraw();
         }
     }
 }
