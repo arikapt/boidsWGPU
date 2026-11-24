@@ -10,3 +10,6 @@ bytemuck = { version = "1.25.2", features = ["derive"] }
 rand = "0.10.2"
 
 pollster = "1.0.1"
+imgui = "0.12.0"
+imgui-winit-support = "0.13.0"
+imgui-wgpu = { git = "https://github.com/Yatekii/imgui-wgpu-rs", rev = "2a636c9531377c8d959f9109008841f2f1c000f2" }

@@ -1,15 +1,26 @@
+use crate::controls::Controls;
+use crate::gpu::GpuContext;
+use crate::parameters::{SimulationParameters, SizeParameters};
+use crate::renderer::Renderer;
+use crate::simulation::BoidsSimulation;
 use std::sync::Arc;
 use winit::application::ApplicationHandler;
 use winit::dpi::LogicalSize;
-use winit::event::{ElementState, KeyEvent, WindowEvent};
+use winit::event::{ElementState, Event, KeyEvent, WindowEvent};
 use winit::event_loop::ActiveEventLoop;
 use winit::keyboard::{KeyCode, PhysicalKey};
 use winit::window::{Window, WindowId};
-use crate::simulation::{BoidsSimulation, HEIGHT, WIDTH};
+
+const WIDTH: u32 = 800;
+const HEIGHT: u32 = 600;
 
 #[derive(Default)]
 pub struct App {
+    gpu: Option<GpuContext>,
     simulation: Option<BoidsSimulation>,
+    renderer: Option<Renderer>,
+    size_parameters: Option<SizeParameters>,
+    controls: Option<Controls>,
 }
 
 impl ApplicationHandler for App {
@@ -28,12 +39,19 @@ impl ApplicationHandler for App {
                 .expect("failed to create window"),
         );
 
-        let simulation = pollster::block_on(BoidsSimulation::new(window));
-        self.simulation = Some(simulation);
+        let gpu = pollster::block_on(GpuContext::new(window));
+        let size_parameters = SizeParameters::new(gpu.config.width, gpu.config.height);
+        let mut controls = Controls::new(gpu.window());
+        let simulation =
+            BoidsSimulation::new(&gpu, SimulationParameters::default(), &size_parameters);
+        let renderer = Renderer::new(&gpu, &simulation, &size_parameters, &mut controls);
 
-        if let Some(simulation) = self.simulation.as_ref() {
-            simulation.window().request_redraw();
-        }
+        gpu.window().request_redraw();
+        self.gpu = Some(gpu);
+        self.simulation = Some(simulation);
+        self.renderer = Some(renderer);
+        self.size_parameters = Some(size_parameters);
+        self.controls = Some(controls);
     }
 
     fn window_event(
@@ -42,15 +60,21 @@ impl ApplicationHandler for App {
         window_id: WindowId,
         event: WindowEvent,
     ) {
-        let Some(simulation) = self.simulation.as_mut() else {
+        let (Some(gpu), Some(simulation), Some(renderer), Some(size_parameters), Some(controls)) = (
+            self.gpu.as_mut(),
+            self.simulation.as_mut(),
+            self.renderer.as_mut(),
+            self.size_parameters.as_mut(),
+            self.controls.as_mut(),
+        ) else {
             return;
         };
 
-        if window_id != simulation.window().id() {
+        if window_id != gpu.window().id() {
             return;
         }
 
-        match event {
+        match &event {
             WindowEvent::CloseRequested => event_loop.exit(),
 
             WindowEvent::KeyboardInput {
@@ -63,20 +87,41 @@ impl ApplicationHandler for App {
                 ..
             } => event_loop.exit(),
 
-            WindowEvent::Resized(size) => simulation.resize(size),
+            WindowEvent::Resized(size) => {
+                if size.width == 0 || size.height == 0 {
+                    controls.handle_event(gpu.window(), &Event::WindowEvent { window_id, event });
+                    return;
+                }
+                *size_parameters = SizeParameters::new(size.width, size.height);
+                gpu.resize(*size);
+                simulation.resize(size_parameters, gpu);
+                renderer.resize(size_parameters, gpu);
+            }
 
             WindowEvent::RedrawRequested => {
-                simulation.update();
-                simulation.window().request_redraw();
+                if controls.build_frame(gpu.window()) {
+                    *simulation = BoidsSimulation::new(gpu, controls.parameters(), size_parameters);
+                    renderer.refresh_simulation(gpu, simulation);
+                }
+                if controls.is_running() {
+                    simulation.update(gpu);
+                }
+                renderer.render(gpu, simulation, controls.draw_data());
+                gpu.window().request_redraw();
             }
 
             _ => {}
         }
+
+        controls.handle_event(gpu.window(), &Event::WindowEvent { window_id, event });
     }
 
     fn about_to_wait(&mut self, _event_loop: &ActiveEventLoop) {
-        if let Some(simulation) = self.simulation.as_ref() {
-            simulation.window().request_redraw();
+        if let Some(gpu) = self.gpu.as_ref() {
+            gpu.window().request_redraw();
+            if let Some(controls) = self.controls.as_mut() {
+                controls.handle_event(gpu.window(), &Event::AboutToWait);
+            }
         }
     }
 }

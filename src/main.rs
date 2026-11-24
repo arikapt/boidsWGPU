@@ -2,6 +2,10 @@ use winit::event_loop::EventLoop;
 
 use app::App;
 mod app;
+mod controls;
+mod gpu;
+mod parameters;
+mod renderer;
 mod simulation;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
