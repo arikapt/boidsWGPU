@@ -3,25 +3,28 @@ struct Boid {
     vel: vec2<f32>,
 };
 
-struct Uniforms {
+struct SimulationParameters {
     delta_time: f32,
-    width: f32,
-    height: f32,
     count: u32,
-    sep_radius: f32,
-    align_radius: f32,
+    separation_radius: f32,
+    alignment_radius: f32,
     cohesion_radius: f32,
-    sep_strength: f32,
-    align_strength: f32,
+    separation_strength: f32,
+    alignment_strength: f32,
     cohesion_strength: f32,
     max_speed: f32,
     min_speed: f32,
 };
 
+struct SizeParameters {
+    width: f32,
+    height: f32,
+};
 
-@group(0) @binding(0) var<uniform> uniforms: Uniforms;
-@group(0) @binding(1) var<storage, read> prev_boids: array<Boid>;
-@group(0) @binding(2) var<storage, read_write> next_boids: array<Boid>;
+@group(0) @binding(0) var<uniform> parameters: SimulationParameters;
+@group(0) @binding(1) var<uniform> size: SizeParameters;
+@group(0) @binding(2) var<storage, read> prev_boids: array<Boid>;
+@group(0) @binding(3) var<storage, read_write> next_boids: array<Boid>;
 
 // --- COMPUTE SHADER: PHYSICS ---
 
@@ -29,7 +32,7 @@ struct Uniforms {
 @compute @workgroup_size(64)
 fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
     let i = gid.x;
-    if (i >= uniforms.count) {
+    if (i >= parameters.count) {
         return;
     }
 
@@ -43,11 +46,11 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
     var cohesion_sum = vec2<f32>(0.0, 0.0);
     var cohesion_count = 0u;
 
-    let sep_r2 = uniforms.sep_radius * uniforms.sep_radius;
-    let align_r2 = uniforms.align_radius * uniforms.align_radius;
-    let coh_r2 = uniforms.cohesion_radius * uniforms.cohesion_radius;
+    let sep_r2 = parameters.separation_radius * parameters.separation_radius;
+    let align_r2 = parameters.alignment_radius * parameters.alignment_radius;
+    let coh_r2 = parameters.cohesion_radius * parameters.cohesion_radius;
 
-    for (var j = 0u; j < uniforms.count; j = j + 1u) {
+    for (var j = 0u; j < parameters.count; j = j + 1u) {
         if (j == i) {
             continue;
         }
@@ -68,33 +71,33 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
         }
     }
 
-    var accel = sep * uniforms.sep_strength;
+    var accel = sep * parameters.separation_strength;
 
     if (align_count > 0u) {
         let avg_vel = align_sum / f32(align_count);
-        accel = accel + (avg_vel - vel) * uniforms.align_strength;
+        accel = accel + (avg_vel - vel) * parameters.alignment_strength;
     }
     if (cohesion_count > 0u) {
         let center = cohesion_sum / f32(cohesion_count);
-        accel = accel + (center - pos) * uniforms.cohesion_strength;
+        accel = accel + (center - pos) * parameters.cohesion_strength;
     }
 
-    vel = vel + accel * uniforms.delta_time;
+    vel = vel + accel * parameters.delta_time;
 
     let speed = length(vel);
-    if (speed > uniforms.max_speed) {
-        vel = vel / speed * uniforms.max_speed;
-    } else if (speed < uniforms.min_speed && speed > 0.0001) {
-        vel = vel / speed * uniforms.min_speed;
+    if (speed > parameters.max_speed) {
+        vel = vel / speed * parameters.max_speed;
+    } else if (speed < parameters.min_speed && speed > 0.0001) {
+        vel = vel / speed * parameters.min_speed;
     }
 
-    pos = pos + vel * uniforms.delta_time;
+    pos = pos + vel * parameters.delta_time;
 
     let margin = 12.0;
-    if (pos.x < -margin) { pos.x = uniforms.width + margin; }
-    if (pos.x > uniforms.width + margin) { pos.x = -margin; }
-    if (pos.y < -margin) { pos.y = uniforms.height + margin; }
-    if (pos.y > uniforms.height + margin) { pos.y = -margin; }
+    if (pos.x < -margin) { pos.x = size.width + margin; }
+    if (pos.x > size.width + margin) { pos.x = -margin; }
+    if (pos.y < -margin) { pos.y = size.height + margin; }
+    if (pos.y > size.height + margin) { pos.y = -margin; }
 
     next_boids[i].pos = pos;
     next_boids[i].vel = vel;

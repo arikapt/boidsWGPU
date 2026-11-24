@@ -3,12 +3,12 @@ struct Boid {
     vel: vec2<f32>,
 };
 
-struct Uniforms {
+struct SizeParameters {
     width: f32,
     height: f32,
 };
 
-@group(0) @binding(0) var<uniform> uniforms: Uniforms;
+@group(0) @binding(0) var<uniform> size: SizeParameters;
 @group(0) @binding(1) var<storage, read> boids: array<Boid>;
 
 // --- RENDER SHADER ---
@@ -42,8 +42,8 @@ fn vs_main(@builtin(vertex_index) vidx: u32, @builtin(instance_index) iidx: u32)
     let scale = 6.0;
     let world = b.pos + rotated * scale;
 
-    let ndc_x = (world.x / uniforms.width) * 2.0 - 1.0;
-    let ndc_y = 1.0 - (world.y / uniforms.height) * 2.0;
+    let ndc_x = (world.x / size.width) * 2.0 - 1.0;
+    let ndc_y = 1.0 - (world.y / size.height) * 2.0;
 
     var out: VertexOut;
     out.pos = vec4<f32>(ndc_x, ndc_y, 0.0, 1.0);
