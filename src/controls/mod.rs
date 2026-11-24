@@ -5,7 +5,7 @@ use imgui_winit_support::{HiDpiMode, WinitPlatform};
 use winit::event::Event;
 use winit::window::Window;
 
-use crate::parameters::SimulationParameters;
+use crate::sim::SimulationParameters;
 
 pub struct Controls {
     context: Context,
