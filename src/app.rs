@@ -1,7 +1,7 @@
-use crate::controls::Controls;
+use crate::controls::{Controls, SizeParameters};
 use crate::gpu::GpuContext;
 use crate::render::Renderer;
-use crate::sim::{BoidsSimulation, SizeParameters};
+use crate::sim::BoidsSimulation;
 use std::sync::Arc;
 use winit::application::ApplicationHandler;
 use winit::dpi::LogicalSize;
