@@ -1,6 +1,6 @@
 use crate::controls::Controls;
-use crate::render::Renderer;
 use crate::gpu::GpuContext;
+use crate::render::Renderer;
 use crate::sim::{BoidsSimulation, SizeParameters};
 use std::sync::Arc;
 use winit::application::ApplicationHandler;
@@ -41,8 +41,7 @@ impl ApplicationHandler for App {
         let gpu = pollster::block_on(GpuContext::new(window));
         let size_parameters = SizeParameters::new(gpu.config.width, gpu.config.height);
         let mut controls = Controls::new(gpu.window());
-        let simulation =
-            BoidsSimulation::new(&gpu, controls.parameters(), &size_parameters);
+        let simulation = BoidsSimulation::new(&gpu, controls.parameters(), &size_parameters);
         let renderer = Renderer::new(&gpu, &simulation, &size_parameters, &mut controls);
 
         gpu.window().request_redraw();
