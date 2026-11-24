@@ -3,8 +3,7 @@ use wgpu::{BindGroup, BindGroupLayout, Buffer, RenderPipeline};
 
 use crate::controls::Controls;
 use crate::gpu::GpuContext;
-use crate::parameters::SizeParameters;
-use crate::simulation::BoidsSimulation;
+use crate::sim::{BoidsSimulation, SizeParameters};
 
 pub struct Renderer {
     render_pipeline: RenderPipeline,

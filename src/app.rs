@@ -1,8 +1,7 @@
 use crate::controls::Controls;
+use crate::render::Renderer;
 use crate::gpu::GpuContext;
-use crate::parameters::{SimulationParameters, SizeParameters};
-use crate::renderer::Renderer;
-use crate::simulation::BoidsSimulation;
+use crate::sim::{BoidsSimulation, SizeParameters};
 use std::sync::Arc;
 use winit::application::ApplicationHandler;
 use winit::dpi::LogicalSize;
@@ -43,7 +42,7 @@ impl ApplicationHandler for App {
         let size_parameters = SizeParameters::new(gpu.config.width, gpu.config.height);
         let mut controls = Controls::new(gpu.window());
         let simulation =
-            BoidsSimulation::new(&gpu, SimulationParameters::default(), &size_parameters);
+            BoidsSimulation::new(&gpu, controls.parameters(), &size_parameters);
         let renderer = Renderer::new(&gpu, &simulation, &size_parameters, &mut controls);
 
         gpu.window().request_redraw();

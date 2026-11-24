@@ -4,7 +4,8 @@ use wgpu::util::{BufferInitDescriptor, DeviceExt};
 use wgpu::{BindGroup, Buffer, ComputePipeline};
 
 use crate::gpu::GpuContext;
-use crate::parameters::{SimulationParameters, SizeParameters};
+
+use super::parameters::{SimulationParameters, SizeParameters};
 
 const DEFAULT_FPS: u32 = 60;
 const WORKGROUP_SIZE: u32 = 64;
